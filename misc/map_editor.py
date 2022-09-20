@@ -84,6 +84,15 @@ class MapEditor:
             # Set framerate to tick at 60 fps
             fps_tick = self.clock.tick(60)
 
+            # Get the key press and append or remove to the radius.
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_a]:
+                self.radius += 5
+            elif keys[pygame.K_n]:
+                self.radius -= 5
+            elif keys[pygame.K_r]:
+                self.drawn_area.clear()
+
             # Eventhandler to get events
             event = Eventhandler.get_events()
             self.mouse_motion(event=event)

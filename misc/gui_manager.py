@@ -54,5 +54,4 @@ class GuiManager:
         pygame_gui.elements.UILabel(relative_rect=text_rect, text="Press N for -brushsize", manager=self.manager)
         
         text_rect = pygame.Rect((175, 100), (180, 50))
-        pygame_gui.elements.UILabel(relative_rect=text_rect, text="Press C for new shape", manager=self.manager)
-
+        pygame_gui.elements.UILabel(relative_rect=text_rect, text="Press R to reset", manager=self.manager)
