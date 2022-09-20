@@ -3,6 +3,10 @@ from dotenv import load_dotenv
 
 
 class Settings:
+    """
+        Settings is used universally by both the Server and the Client to get the env variables
+    """
+    
     def __init__(self):
         load_dotenv()
 

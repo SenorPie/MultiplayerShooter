@@ -31,6 +31,7 @@ class Client:
         """ The main loop running the game client """
         
         player = Player(surface=self.screen)
+        self.gui_manager.main_menu()
 
         # The main client loop
         while True:
@@ -44,6 +45,7 @@ class Client:
             if event is not None:
                 self.gui_manager.gui_loop(clock_tick=fps_tick, event=event)
 
+            # If the start_button has been pressed, start the game
             if self.gui_manager.game_started:
                 player.draw_player()
                 player.move_player()

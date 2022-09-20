@@ -17,6 +17,8 @@ class Item:
             @parameters
                 player_pos: the position of the player
                 offset: the offset of the item
+            
+            @returns a pygame.Rect object
         """
         
         return pygame.Rect((player_pos[0] + offset * 2, player_pos[1] + offset), (20, 10))

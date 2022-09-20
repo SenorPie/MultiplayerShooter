@@ -1,4 +1,5 @@
 from eventhandler import Eventhandler
+from gui_manager import GuiManager
 import sys
 import pygame
 
@@ -10,9 +11,7 @@ class MapEditor:
 
             @parameters
                 surface:
-                    type: pygame.Surface
-                    description: Used for manipulating the game window
-            
+                    type: pygame.Surface            
         """
 
         # Radius is to dictate the size of the circle
@@ -26,13 +25,12 @@ class MapEditor:
 
         # Array to keep what the player has drawn
         self.drawn_area = []
-    
+
     def mouse_motion(self, event: pygame.event):
         """ mouse_motion is a to show the player their current position for them to draw with
             @parameters
                 event: 
                     type: pygame.Event
-                    descrption: used for checking against the given event to look for mouse motion
         """
 
         if event is None: return
@@ -46,7 +44,7 @@ class MapEditor:
 
             # Redraw the drawn areas
             self.draw()
-
+        
             # Draw our circle with respective values
             pygame.draw.circle(surface=self.surface, color=self.color,
                                center=self.position, radius=self.radius)
@@ -56,10 +54,10 @@ class MapEditor:
         if left_mousebtn:
             # Append an object with the color, position and size of the drawn object
             self.drawn_area.append((self.color, self.position, self.radius))
-    
+
     def draw(self):
         """
-            Draws the user drawn circles that are appended into the array @drawn_area
+            draw(): draws the user drawn circles that are appended into the array @drawn_area
             whenever a user holds down mouse_btn left
         """
 
@@ -69,6 +67,7 @@ class MapEditor:
     
 
     def main(self):
+        """ The client loop for the pygame. """
         pygame.init()
         
         # Initialize the fps clock & our screen
@@ -76,11 +75,14 @@ class MapEditor:
         self.surface = pygame.display.set_mode((500, 500))
         pygame.display.set_caption("Map editor")
 
+        # Initialize GUI manager
+        self.gui_manager = GuiManager(surface=self.surface)
+        self.gui_manager.map_editor_text()
 
         # The main client loop
         while True:
             # Set framerate to tick at 60 fps
-            self.clock.tick(60)
+            fps_tick = self.clock.tick(60)
 
             # Eventhandler to get events
             event = Eventhandler.get_events()
@@ -90,6 +92,10 @@ class MapEditor:
             if event is not None and event.type == pygame.WINDOWCLOSE:
                 sys.exit()
             
+            # Start the GUI loop
+            if event is not None:
+                self.gui_manager.gui_loop(clock_tick=fps_tick, event=event, mapeditor=True)
+
             # Update display
             pygame.display.update()
 
