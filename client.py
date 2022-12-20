@@ -2,9 +2,9 @@ import pygame
 import sys
 import logging
 import threading
-import time
 from networking.network import Network
 from networking.outgoing import OutgoingPacket
+from networking.networkcrypt import NetworkEncryption
 from misc.eventhandler import Eventhandler
 from misc.gui_manager import GuiManager
 from entity.player import Player
@@ -41,9 +41,12 @@ class Client:
         self.gui_manager = GuiManager(surface=self.screen)
 
         # Initialize networking
-        self.network = Network(rsa=self.settings.rsa)
-        self.connected = False # Changed when client succesfully connects
-        self.client_id = None # Changed when client succesfully connects
+        self.network = Network()
+        self.connected = False
+        self.client_id = None
+
+        # Initialize encryption for RSA
+        self.rsa = NetworkEncryption()
     
     def draw_others(self):
         '''Draws other players that are connected.'''
@@ -52,14 +55,13 @@ class Client:
         for client_id, o_player in self.network.players.items():
             # If the connected client has not received a screen to be drawn on
             if o_player.surface != self.screen:
-                # Set new surface and log
+                # Set new surface and log info
                 logging.info(f"{client_id} does not have a surface.")
                 o_player.surface = self.screen
             
             # Draw player now
             o_player.draw_player()
             
-
     def main(self):
         '''The main loop running the game client.'''
         
@@ -94,7 +96,7 @@ class Client:
                     # Initialize OutgoingPacket class for sending packets
                     self.outgoing = OutgoingPacket(server=self.network.sock,
                                                    client_id=self.client_id,
-                                                   rsa=self.settings.rsa)
+                                                   rsa=self.rsa)
                     
                     # Start our thread to receive packets from the server
                     self.receive_thread = threading.Thread(target=self.network.receive_thread, args=(self.connected,))

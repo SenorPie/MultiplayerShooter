@@ -1,9 +1,11 @@
 import threading
 import socket
-import pickle
-import sys
 import logging
+import pickle
 from settings import Settings
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import padding
 
 # Create a threading lock to synchronize access to shared resources
 lock = threading.Lock()
@@ -28,7 +30,6 @@ class ThreadedServer(object):
     def __init__(self):
         # Load our settings and RSA encryption
         settings = Settings()
-        self.rsa = settings.rsa
 
         # Create a TCP/IP socket
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -41,6 +42,9 @@ class ThreadedServer(object):
 
         # A integer that increments after client connection, this is so our clients each get a unique key
         self.client_id = 1
+
+        # Load private key
+        self.private_key = self.load_privkey()
 
     def listen(self):
         '''Listen for new connections, sends client_id to server and then starts a new thread.'''
@@ -93,15 +97,40 @@ class ThreadedServer(object):
                 # Forward the message to all other connected clients
                 for c in self.clients:
                     if c != client:
-                        logging.info("Forwarding data to the other clients")
-                        c.send(data)
-            
+                        # Decrypt data with our RSA private key
+                        decrypted_data = self.decrypt_data(data)
+                        print(decrypted_data)
+                        c.send(decrypted_data)
+
             # If a client is abruptetly disconnected do the following to ensure the server's stability
             except ConnectionResetError:
                 logging.info("Client has disconnected, removing them from server.")
                 self.clients.remove(client)
                 client.close()
                 break
+
+    def load_privkey(self):
+        '''Load private key from file saved in folder /keys'''
+        with open("keys/private_key.pem", "rb") as key_file:
+            private_key = serialization.load_pem_private_key(key_file.read(),
+                                                             password=b'8hPr2q2ntPMXQ2dPAfqJxGyyrH2U*XI(hIEnaHNHC&vTwWJNVX9KqYRwrem2WmPZ')
+            return private_key
+
+    def decrypt_data(self, encrypted_data) -> str:
+        """Decrypts the encrypted_data signed by the RSA public_key
+        @Parameters
+            encrypted_data: bytes
+                Contains the encrypted data that needs to be decrypted server sided by the private key
+        """
+        
+        plaintext = self.private_key.decrypt(
+            encrypted_data,
+            padding.OAEP(
+                mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                algorithm=hashes.SHA256(),
+                label=None))
+    
+        return plaintext
 
 if __name__ == "__main__":
     # Create a ThreadedServer instance

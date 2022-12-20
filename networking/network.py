@@ -1,21 +1,13 @@
 import socket
 import pickle
 import logging
-from cryptography.fernet import Fernet
 from entity.player import Player
 
 class Network:
-    def __init__(self, rsa: Fernet):
-        """Initialize network class.
-        @Parameters
-            rsa: Fernet
-                A instance of Fernet provided by settings.py, will be used for RSA encryption.
-        """
-
+    def __init__(self):
+        '''Initialize network class.'''
         # Create a TCP/IP socket
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.rsa = rsa
-
         self.players = {}
 
     def close(self):
