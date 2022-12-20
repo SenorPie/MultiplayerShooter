@@ -1,19 +1,12 @@
 from eventhandler import Eventhandler
 from gui_manager import GuiManager
 import sys
+import json
 import pygame
 
 class MapEditor:
     def __init__(self):
-        """
-            MapEditor is a universal class used for drawing & showing the brush cursor.
-            This is used to design the maps which are added onto the MYSQL Database containing the drawn objects
-
-            @parameters
-                surface:
-                    type: pygame.Surface            
-        """
-
+        '''MapEditor is a universal class used for drawing & showing the brush cursor.'''
         # Radius is to dictate the size of the circle
         self.radius = 30
 
@@ -27,10 +20,9 @@ class MapEditor:
         self.drawn_area = []
 
     def mouse_motion(self, event: pygame.event):
-        """ mouse_motion is a to show the player their current position for them to draw with
-            @parameters
-                event: 
-                    type: pygame.Event
+        """This function displays where the user is hovering their cursor.
+        @Parameters
+            event : pygame.event.
         """
 
         if event is None: return
@@ -56,15 +48,43 @@ class MapEditor:
             self.drawn_area.append((self.color, self.position, self.radius))
 
     def draw(self):
-        """
-            draw(): draws the user drawn circles that are appended into the array @drawn_area
-            whenever a user holds down mouse_btn left
-        """
+        '''Draw where the cursor is hovered and append to array "drawn_area"'''
 
         for drawn in self.drawn_area:
             pygame.draw.circle(surface=self.surface, color=drawn[0],
                                center=drawn[1], radius=drawn[2])
     
+    def save_map(self, color, position, radius):
+        with open(file="objects.json") as fp:
+            list_obj = json.load(fp)
+
+        object_dict = {"color": color, "position": position, "radius": radius}        
+        list_obj.append(object_dict)
+        new_list_obj = json.dumps(list_obj, indent=4, sort_keys=True)
+
+        with open(file="objects.json", mode="w") as f:
+            f.write(new_list_obj)
+    
+    def load_map(self):
+        with open("objects.json") as f:
+            list_obj = json.load(f)
+            
+            for object in list_obj:
+                self.drawn_area.append((object.get("color"), object.get("position"), object.get("radius")))
+        
+        self.draw()
+
+    def keybinds(self, event: pygame.event):
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_s:
+                for object in self.drawn_area:
+                    self.save_map(color=object[0], position=object[1], radius=object[2])
+            elif event.key == pygame.K_a:
+                self.radius += 5
+            elif event.key == pygame.K_n:
+                self.radius -= 5
+            elif event.key == pygame.K_r:
+                self.drawn_area.clear()
 
     def main(self):
         """ The client loop for the pygame. """
@@ -78,20 +98,12 @@ class MapEditor:
         # Initialize GUI manager
         self.gui_manager = GuiManager(surface=self.surface)
         self.gui_manager.map_editor_text()
+        self.load_map()
 
         # The main client loop
         while True:
             # Set framerate to tick at 60 fps
             fps_tick = self.clock.tick(60)
-
-            # Get the key press and append or remove to the radius.
-            keys = pygame.key.get_pressed()
-            if keys[pygame.K_a]:
-                self.radius += 5
-            elif keys[pygame.K_n]:
-                self.radius -= 5
-            elif keys[pygame.K_r]:
-                self.drawn_area.clear()
 
             # Eventhandler to get events
             event = Eventhandler.get_events()
@@ -103,6 +115,7 @@ class MapEditor:
             
             # Start the GUI loop
             if event is not None:
+                self.keybinds(event=event)
                 self.gui_manager.gui_loop(clock_tick=fps_tick, event=event, mapeditor=True)
 
             # Update display
